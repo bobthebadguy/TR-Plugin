@@ -1,30 +1,35 @@
 package TR;
 
 import arc.*;
+import arc.math.Mathf;
 import arc.util.*;
 import mindustry.*;
 import arc.graphics.Color;
 import arc.util.CommandHandler;
+import mindustry.content.Bullets;
+import mindustry.entities.bullet.LiquidBulletType;
 import mindustry.entities.effect.Lightning;
+import mindustry.entities.traits.TeamTrait;
 import mindustry.entities.type.Player;
 import mindustry.game.Team;
+import mindustry.game.Teams;
 import mindustry.gen.Call;
 import mindustry.plugin.Plugin;
+import mindustry.entities.type.Bullet;
+import mindustry.world.WorldContext;
 
-import mindustry.content.*;
-import mindustry.entities.type.*;
-import mindustry.game.EventType.*;
-import mindustry.gen.*;
-import mindustry.plugin.Plugin;
+
 
 import static arc.math.Mathf.*;
-import static mindustry.Vars.playerGroup;
+import static mindustry.Vars.*;
 
-public class Main extends Plugin {
+public class Main extends Plugin implements Runnable{
 
+    int i;
     private int uid;
     private float trapx;
     private float trapy;
+    private float playerspeed;
 
     /*    //register event handlers and create variables in the constructor
         public Main(){
@@ -50,12 +55,27 @@ public class Main extends Plugin {
                 }
             }
         });
-    } */
+    }
 
-        public Main(){
+ public Main(){
             Call.sendMessage("test");
         }
-
+*/
+    public void run() {
+        for (int i = 1; i <= world.getMap().height * world.getMap().width / 100; i++) {
+            Call.sendMessage("starting loop number " + i + " of " + (world.getMap().height * world.getMap().width / 100));
+            int xpos = Mathf.random(1, world.getMap().width - 1) * tilesize;
+            int ypos = Mathf.random(1, world.getMap().height - 1) * tilesize;
+            for (i = 1; i <= 360; i = i + 45) {
+                Lightning.create(Team.blue, Color.white, 25, xpos, ypos, i, 20);
+            }
+            try {
+                Thread.sleep( Mathf.random(1, 500));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
     //register commands that player can invoke in-game
     @Override
     public void registerClientCommands(CommandHandler handler) {
@@ -73,34 +93,57 @@ public class Main extends Plugin {
                             "\ninfo                Lists commands." +
                             "\nsmite               Smites player." +
                             "\nlightning           Summons a lightning storm." +
-                            "\nweaken              Weakens player." +
+                            "\nkill                Kills player." +
                             "\ntrap                Traps a player");
                     break;
                 case "smite":
                     uid = Integer.parseInt(arg[1]);
-                    //if(uid == "") {player.sendMessage("Must be number"); return;}
-                    for (int i = 1; i <= 360; i = i + 36) {
+                    try {
+                        playerGroup.getByID(uid);
+                    } catch (Exception e) {
+                        player.sendMessage("Player not found");
+                        return;
+                    }
+                    for (i = 1; i <= 360; i = i + 36) {
                         Lightning.create(Team.crux, Color.white, 100, playerGroup.getByID(uid).x, playerGroup.getByID(uid).y, i, 15);
                     }
                     break;
                 case "lightning":
-                    player.sendMessage("nothing yet, sorry");
+                    new Thread(new Main()).start();
                     break;
-                case "weaken":
+                case "kill":
                     uid = Integer.parseInt(arg[1]);
-                    //debuff player
+                    player.mech.buildPower = 0.001f;
+                    playerGroup.getByID(uid).dead = true;
                 case "trap":
                     uid = Integer.parseInt(arg[1]);
                     trapx = playerGroup.getByID(uid).x;
                     trapy = playerGroup.getByID(uid).y;
-
-                    atan2(playerGroup.getByID(uid).x - trapx, playerGroup.getByID(uid).y - trapy);
-                    //+ sqrt(pow(playerGroup.getByID().getDeltaX(), 2) + pow(playerGroup.getByID().getDeltaY(), 2)) * 2;
-                    sqrt(pow(trapx - playerGroup.getByID(uid).x , 2) + pow(trapy - playerGroup.getByID(uid).y, 2));
-
-
+                    //find angle of the line between the desired point, trapx and trapy, and the player. Add 180 degrees to point the water stream to push the player the other way.
+                    float angle = atan2(playerGroup.getByID(uid).x - trapx, playerGroup.getByID(uid).y - trapy) + 180;
+                    playerspeed = sqrt(pow(playerGroup.getByID(uid).getDeltaX(), 2) + pow(playerGroup.getByID(uid).getDeltaY(), 2)) * 2;
+                    //find distance from the point we are pushing the player back to.
+                    float dist = Mathf.len(trapx - playerGroup.getByID(uid).x, trapy - playerGroup.getByID(uid).y);
+                    //Bullet.create(Bullets.waterShot, null, 10 * cosDeg(angle), 10 * sinDeg(angle), angle);
+                    for (i = 1; i <= 200; i++) {
+                        Bullet.createBullet(Bullets.waterShot, Team.crux, cosDeg(angle), sinDeg(angle), angle, 1f, 1f);
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace(); //wtf what interruped it
+                        }
+                    }
+                    break;
+                default:
+                    player.sendMessage("That's not an option. Use /tr info for options.");
             }
-        });
 
+        });
     }
+
+/*    private int parseName(String name) {
+        int uid;
+        uid = playerGroup.getID("bob");
+        return this.uid;
+    }*/
 }
