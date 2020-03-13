@@ -30,6 +30,7 @@ public class Main extends Plugin implements Runnable{
     private float trapx;
     private float trapy;
     private float playerspeed;
+    private float prevRespawnTime;
 
     /*    //register event handlers and create variables in the constructor
         public Main(){
@@ -62,12 +63,16 @@ public class Main extends Plugin implements Runnable{
         }
 */
     public void run() {
-        for (int i = 1; i <= world.getMap().height * world.getMap().width / 100; i++) {
+        for (int i = 1; i <= world.getMap().height * world.getMap().width / 125; i++) {
             Call.sendMessage("starting loop number " + i + " of " + (world.getMap().height * world.getMap().width / 100));
             int xpos = Mathf.random(1, world.getMap().width - 1) * tilesize;
             int ypos = Mathf.random(1, world.getMap().height - 1) * tilesize;
-            for (i = 1; i <= 360; i = i + 45) {
-                Lightning.create(Team.blue, Color.white, 25, xpos, ypos, i, 20);
+            try {
+                for (i = 1; i <= 360; i = i + 45) {
+                    Lightning.create(Team.blue, Color.white, 25, xpos, ypos, i, 20);
+                }
+            } catch(Exception e) {
+                Call.sendMessage("Lightning.create error: " + e);
             }
             try {
                 Thread.sleep( Mathf.random(1, 500));
@@ -94,7 +99,8 @@ public class Main extends Plugin implements Runnable{
                             "\nsmite               Smites player." +
                             "\nlightning           Summons a lightning storm." +
                             "\nkill                Kills player." +
-                            "\ntrap                Traps a player");
+                            "\ntrap                Traps a player-WIP" +
+                            "\ntrapcore            Traps everyone in the core after death <[gray]on/off[]>");
                     break;
                 case "smite":
                     uid = Integer.parseInt(arg[1]);
@@ -109,7 +115,15 @@ public class Main extends Plugin implements Runnable{
                     }
                     break;
                 case "lightning":
-                    new Thread(new Main()).start();
+                    try {
+                        Integer.parseInt(arg[1]);
+                        for (i = 1; i <= Integer.parseInt(arg[1]); i++) {
+                            new Thread(new Main()).start();
+                        }
+                    } catch (Exception e) {
+                        new Thread(new Main()).start();
+                    }
+
                     break;
                 case "kill":
                     uid = Integer.parseInt(arg[1]);
@@ -126,12 +140,25 @@ public class Main extends Plugin implements Runnable{
                     float dist = Mathf.len(trapx - playerGroup.getByID(uid).x, trapy - playerGroup.getByID(uid).y);
                     //Bullet.create(Bullets.waterShot, null, 10 * cosDeg(angle), 10 * sinDeg(angle), angle);
                     for (i = 1; i <= 200; i++) {
-                        Bullet.createBullet(Bullets.waterShot, Team.crux, cosDeg(angle), sinDeg(angle), angle, 1f, 1f);
+                        Call.createBullet(Bullets.waterShot, Team.crux, cosDeg(angle), sinDeg(angle), angle, 1f, 1f);
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException e) {
                             e.printStackTrace(); //wtf what interruped it
                         }
+                    }
+                    break;
+                case "trapcore":
+                    switch (arg[1]) {
+                        case "on":
+                            prevRespawnTime = state.rules.respawnTime;
+                            state.rules.respawnTime = 100000000;
+                            break;
+                        case "off":
+                            state.rules.respawnTime = prevRespawnTime;
+                            break;
+                        default:
+                            player.sendMessage("Trapcore: on or off.");
                     }
                     break;
                 default:
