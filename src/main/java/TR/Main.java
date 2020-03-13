@@ -29,7 +29,6 @@ public class Main extends Plugin implements Runnable{
     private int uid;
     private float trapx;
     private float trapy;
-    private float playerspeed;
     private float prevRespawnTime;
 
     /*    //register event handlers and create variables in the constructor
@@ -62,9 +61,9 @@ public class Main extends Plugin implements Runnable{
             Call.sendMessage("test");
         }
 */
-    public void run() {
+    public void run() { //this is for the lightning command
         for (int i = 1; i <= world.getMap().height * world.getMap().width / 125; i++) {
-            Call.sendMessage("starting loop number " + i + " of " + (world.getMap().height * world.getMap().width / 100));
+            //Call.sendMessage("starting loop number " + i + " of " + (world.getMap().height * world.getMap().width / 100));
             int xpos = Mathf.random(1, world.getMap().width - 1) * tilesize;
             int ypos = Mathf.random(1, world.getMap().height - 1) * tilesize;
             try {
@@ -135,7 +134,7 @@ public class Main extends Plugin implements Runnable{
                     trapy = playerGroup.getByID(uid).y;
                     //find angle of the line between the desired point, trapx and trapy, and the player. Add 180 degrees to point the water stream to push the player the other way.
                     float angle = atan2(playerGroup.getByID(uid).x - trapx, playerGroup.getByID(uid).y - trapy) + 180;
-                    playerspeed = sqrt(pow(playerGroup.getByID(uid).getDeltaX(), 2) + pow(playerGroup.getByID(uid).getDeltaY(), 2)) * 2;
+                    //playerspeed = sqrt(pow(playerGroup.getByID(uid).getDeltaX(), 2) + pow(playerGroup.getByID(uid).getDeltaY(), 2)) * 2;
                     //find distance from the point we are pushing the player back to.
                     float dist = Mathf.len(trapx - playerGroup.getByID(uid).x, trapy - playerGroup.getByID(uid).y);
                     //Bullet.create(Bullets.waterShot, null, 10 * cosDeg(angle), 10 * sinDeg(angle), angle);
@@ -144,7 +143,7 @@ public class Main extends Plugin implements Runnable{
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException e) {
-                            e.printStackTrace(); //wtf what interruped it
+                            e.printStackTrace(); //wtf what interrupted it
                         }
                     }
                     break;
